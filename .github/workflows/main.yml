@@ -19,13 +19,14 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT }}   # Use a PAT with write:packages scope
 
       # Step 3: Build and push Docker image
       - name: Build and push Docker image
         run: |
           REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_NAME=ghcr.io/$REPO/node-service:latest
+          echo "Using image name: $IMAGE_NAME"
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
@@ -37,7 +38,9 @@ jobs:
           username: osboxes
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            IMAGE_NAME=ghcr.io/${{ github.repository }}/node-service:latest
+            REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_NAME=ghcr.io/$REPO/node-service:latest
+            echo "Deploying image: $IMAGE_NAME"
             docker pull $IMAGE_NAME
             docker stop node-service || true
             docker rm node-service || true
