@@ -37,7 +37,7 @@ jobs:
       - name: Deploy to remote server
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: 127.0.0.1
+          host: 192.168.1.13
           username: osboxes
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
