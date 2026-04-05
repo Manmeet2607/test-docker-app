@@ -1,18 +1,46 @@
-name: Deploy app
+name: Build and Deploy Node Service
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout code
+      # Step 1: Checkout your repository
+      - name: Checkout code
         uses: actions/checkout@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build Docker image
+
+      # Step 2: Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Build and push Docker image
+      - name: Build and push Docker image
         run: |
-          docker build -t node-service:latest .
+          IMAGE_NAME=ghcr.io/${{ github.repository }}/node-service:latest
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+
+      # Step 4: Deploy to remote server
+      - name: Deploy to remote server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: 127.0.0.1
+          username: osboxes
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            IMAGE_NAME=ghcr.io/${{ github.repository }}/node-service:latest
+            docker pull $IMAGE_NAME
+            docker stop node-service || true
+            docker rm node-service || true
+            docker run -d --name node-service \
+              --env-file /home/${{ secrets.SERVER_USER }}/.env \
+              -p 3000:3000 \
+              $IMAGE_NAME
