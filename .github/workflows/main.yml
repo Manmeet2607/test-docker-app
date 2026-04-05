@@ -24,7 +24,8 @@ jobs:
       # Step 3: Build and push Docker image
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}/node-service:latest
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$REPO/node-service:latest
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
 
